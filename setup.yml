@@ -1,0 +1,27 @@
+---
+
+- hosts: elk # gather facts from ELK cluster
+  become: yes
+  roles:
+    - chrony # keep clock synchronised
+    - bitnami_elk_configure # add index pattern to kibana, obtain the auto-generated password from the running instance
+
+- hosts: blockwizard_appservers
+  become: yes
+  vars:
+    ntp_servers: "169.254.169.123"
+    app_install_path: "/home/app/blockwizard"
+    app_version: "0.1.2"
+    app_package: "blockwizard-{{app_version}}/blockwizard-{{app_version}}.jar"
+    app_startup_file: "blockwizard-{{app_version}}/start.sh"
+    app_configuration_template: "templates/application.properties-{{app_version}}.j2"
+    app_username: "app"
+    app_groupname: "app"
+    app_log_path: "/var/log/blockwizard"
+    app_log_file: "app.log"
+  roles:
+    - chrony # keep clock synchronised
+    - { role: create_user, username: app, authorized_key: credentials/user_app_key.pub } # application user
+    - deploy_blockwizard # deploy app and associated scripts
+    - filebeat_blockwizard # deploy filebeat to aggregate logs to elasticsearch
+

@@ -1,0 +1,18 @@
+---
+- name: get password from running instance 
+  shell: cat /home/bitnami/bitnami_credentials
+  register: bitnami_password
+
+- name: save password to local file
+  local_action: copy content={{ bitnami_password }} dest=credentials/bitnami_user_password
+  become: no
+
+- name: copy index pattern json 
+  copy: 
+    src: files/new_index_pattern.json
+    dest: /tmp/new_index_pattern.json
+
+- name: add index pattern to kibana if it doesn't exist
+  shell: |
+    ( curl -s -XGET http://localhost:5601/api/saved_objects/index-pattern/filebeat-pattern|grep -q 'statusCode.:404'  && \
+    curl -XPOST http://localhost:5601/api/saved_objects/index-pattern/filebeat-pattern -H "Content-Type: application/json" -H "kbn-xsrf: true" -d @/tmp/new_index_pattern.json ) || true

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+NODE="{{blockwizard_node_name}}"
+LOGFILE="{{app_log_path}}/{{app_log_file}}"
+APPSTARTUP="{{app_install_path}}/start.sh"
+
+while :; do 
+	
+	# insert restart mark
+	date +"%Y-%m-%d %H:%M:%S.000" |tr -d '\n'>> $LOGFILE
+	echo " (re)starting app" >>$LOGFILE
+
+	# run app
+	$APPSTARTUP $NODE >>$LOGFILE 2>>$LOGFILE
+
+	# check for erroneous exit
+	if [ $? != 0 ]; then
+			date +"%Y-%m-%d %H:%M:%S.000" |tr -d '\n'>> $LOGFILE
+	        echo " App exited with non zero status: $?" >> $LOGFILE
+	fi
+
+done

@@ -1,0 +1,9 @@
+{% if 'broker' in blockwizard_node_name %}
+mode=BROKER
+nodes={% for host in groups['blockwizard_nodes'] %}{{ hostvars[host]['ansible_default_ipv4']['address'] }}:{{ hostvars[host]['blockwizard_app_port'] }}{% if not loop.last %},{% endif %}{% endfor %}
+
+{% else %}
+mode=NODE
+node.type={{ (blockwizard_app_port % 2 == 0) | ternary ('even','odd') }}
+{% endif %}
+server.port={{blockwizard_app_port}}

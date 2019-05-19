@@ -1,0 +1,18 @@
+filebeat:
+  inputs:
+    - input_type: log
+      paths:
+        - "{{app_log_path}}/{{app_log_file}}"
+      multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+      multiline.negate: true
+      multiline.match: after
+
+output:
+  elasticsearch:
+    hosts: {{ hostvars[groups['elk'][0]]['ansible_default_ipv4']['address'] }}:9200
+
+name: "{{blockwizard_node_name}}"
+
+logging:
+  level: warning
+  to_syslog: true

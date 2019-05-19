@@ -1,0 +1,3 @@
+generate_password: no
+authorized_key: ""
+shell: "/bin/bash"

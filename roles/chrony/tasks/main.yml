@@ -1,0 +1,24 @@
+---
+
+# Tasks to install the chrony NTP daemon
+
+- name: Ensure chrony is installed
+  apt:
+    name: chrony
+    cache_valid_time: 3600
+
+- name: Add servers to config
+  lineinfile: 
+    dest: /etc/chrony/chrony.conf
+    line: "server {{ item }} prefer iburst minpoll 4 maxpoll 4"
+    state: present
+    firstmatch: yes
+    insertbefore: "^(server|pool)"
+  with_items: "{{ ntp_servers }}"
+  notify: restart chrony
+  when: ntp_servers != ""
+
+
+- name: Ensure chrony is running
+  service: name=chrony state=started enabled=yes
+

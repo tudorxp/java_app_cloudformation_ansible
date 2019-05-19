@@ -1,0 +1,78 @@
+---
+- name: Ensure Java is installed
+  apt:
+    name: openjdk-11-jre
+    cache_valid_time: 3600
+
+- name: Create app home folder
+  file: 
+    dest: "{{ app_install_path }}"
+    owner: "{{ app_username }}"
+    group: "{{ app_groupname }}"
+    mode: "0700"
+    state: directory
+
+- name: Create app log folder
+  file: 
+    dest: "{{ app_log_path }}"
+    owner: "root"
+    group: "{{ app_groupname }}"
+    mode: "0770"
+    state: directory
+
+- name: Stop any running applications before deploy
+  shell: |
+    pkill -u {{ app_username }} -f blockwizard_run.sh || true; 
+    pkill -u {{ app_username }} -f 'java -Dspring.profiles.active={{blockwizard_node_name}}' || true
+
+- name: deploy application package
+  copy:
+    src: "{{ app_package }}"
+    dest: "{{ app_install_path }}/"
+    owner: "{{ app_username }}"
+    group: "{{ app_groupname }}"    
+    mode: "0640"
+
+- name: deploy startup.sh script
+  copy:
+    src: "{{ app_startup_file }}"
+    dest: "{{ app_install_path }}/"
+    owner: "{{ app_username }}"
+    group: "{{ app_groupname }}"  
+    mode: "0750"
+
+- name: deploy application-nodename.properties from template
+  template: 
+    src: "{{ app_configuration_template }}"
+    dest: "{{ app_install_path }}/application-{{ blockwizard_node_name }}.properties"
+    owner: "{{ app_username }}"
+    group: "{{ app_groupname }}"
+    mode: "0640"
+
+
+- name: deploy app run orchestrator script from template
+  template: 
+    src: "templates/blockwizard_run.sh.j2"
+    dest: "{{ app_install_path }}/blockwizard_run.sh"
+    owner: "{{ app_username }}"
+    group: "{{ app_groupname }}"
+    mode: "0750"
+
+- name: make sure rc.local exists & is executable
+  lineinfile:
+    create: yes
+    mode: "0755"
+    insertbefore: "BOF"
+    path: "/etc/rc.local"
+    line: "#!/bin/bash"
+
+- name: add app startup to rc.local
+  lineinfile:
+    insertafter: "EOF"
+    path: "/etc/rc.local"
+    line: "sudo -iu {{ app_username }} {{app_install_path}}/blockwizard_run.sh &"
+
+- name: restart rc.local
+  service:
+    name: rc.local
+    state: restarted

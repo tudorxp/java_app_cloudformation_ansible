@@ -1,0 +1,33 @@
+---
+- name: ensure filebeat install dependency is present
+  apt: name=apt-transport-https state=present
+
+- name: add elasticsearch apt key.
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    id: 46095ACC8548582C1A2699A9D27D666CD88E42B4
+    state: present
+
+- name: add filebeat repository.
+  apt_repository:
+    repo: 'deb https://artifacts.elastic.co/packages/oss-{{ filebeat_version }}/apt stable main'
+    state: present
+    update_cache: true
+
+- name: install filebeat
+  package: name=filebeat state=present
+
+- name: config filebeat
+  template:
+    src: templates/filebeat.yml.j2
+    dest: "/etc/filebeat/filebeat.yml"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart filebeat
+
+- name: ensure filebeat is started and enabled at boot
+  service:
+    name: filebeat
+    state: started
+    enabled: true

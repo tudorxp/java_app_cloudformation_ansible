@@ -1,0 +1,26 @@
+
+[blockwizard_brokers]
+52.11.107.48 blockwizard_app_port=16000 blockwizard_node_name=broker
+
+[blockwizard_nodes]
+34.216.98.25 blockwizard_app_port=16001 blockwizard_node_name=node1
+35.160.13.116 blockwizard_app_port=16002 blockwizard_node_name=node2
+
+[blockwizard_appservers:children]
+blockwizard_brokers
+blockwizard_nodes
+
+[blockwizard_appservers:vars]
+ansible_user=ubuntu
+ansible_private_key_file=/Users/top/aws/k1.key
+ansible_python_interpreter=python3
+
+[elk]
+35.155.183.63
+
+[elk:vars]
+ansible_user=bitnami
+ansible_private_key_file=/Users/top/aws/k1.key
+ansible_python_interpreter=python3
+
+
